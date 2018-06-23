@@ -4,11 +4,11 @@ import entropy
 
 class Model:  # (Basically uses 'get' functions with lazy loading. Structure inspired by https://danijar.com/structuring-your-tensorflow-models/)
 
-    def __init__(self, input_ph, target_ph, learning_rate_ph, beta, d, squared_IB_functional):
+    def __init__(self, input_ph, target_ph, learning_rate_ph, d, squared_IB_functional):
         self.input_ph = input_ph
         self.target_ph = target_ph
         self.learning_rate_ph = learning_rate_ph
-        self.beta = beta
+        self.beta = tf.placeholder(tf.float32, shape=(), name="beta")
         self.d = d
         self.squared_IB_functional = squared_IB_functional
 
@@ -69,9 +69,9 @@ class Model:  # (Basically uses 'get' functions with lazy loading. Structure ins
             self._Ixt = H_T - H_T_given_X
             self._Iyt = tf.log(10.0) - cross_entropy
             if self.squared_IB_functional:
-                self._loss = self.beta * tf.square(self._Ixt) - self._Iyt
+                self._loss = tf.scalar_mul(self.beta, tf.square(self._Ixt)) - self._Iyt
             else:
-                self._loss = self.beta * self._Ixt - self._Iyt
+                self._loss = tf.scalar_mul(self.beta, self._Ixt) - self._Iyt
 
         return self._loss, self._Ixt, self._Iyt
 

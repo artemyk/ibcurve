@@ -6,6 +6,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
+FIGS_DIR = 'figures/'
+LOGS_DIR = 'logs/'
+
 def main():
 
     # build and train models for different values of beta
@@ -31,54 +34,54 @@ def main():
         for beta in Beta:
             beta_string = '%.3f' % beta
             file_name = 'IB2_beta_' + beta_string.replace('.', '-')
-            learning_curves = np.loadtxt('logs/learning_curves_' + file_name + '.txt')
+            learning_curves = np.loadtxt(LOGS_DIR+'learning_curves_' + file_name + '.txt')
             I_xt_squared_IB.append(learning_curves[-1, 1])
             I_yt_squared_IB.append(learning_curves[-1, 2])
 
             file_name = 'IB_beta_' + beta_string.replace('.', '-')
-            learning_curves = np.loadtxt('logs/learning_curves_' + file_name + '.txt')
+            learning_curves = np.loadtxt(LOGS_DIR+'learning_curves_' + file_name + '.txt')
             I_xt.append(learning_curves[-1, 1])
             I_yt.append(learning_curves[-1, 2])
         I_xt_squared_IB = np.array(I_xt_squared_IB)
         I_yt_squared_IB = np.array(I_yt_squared_IB)
         I_xt = np.array(I_xt)
         I_yt = np.array(I_yt)
-        I_xt_test_squared_IB = np.loadtxt('logs/test_set_results_IB2.txt', usecols=1)[-len(Beta):]
-        I_yt_test_squared_IB = np.loadtxt('logs/test_set_results_IB2.txt', usecols=2)[-len(Beta):]
-        I_xt_test = np.loadtxt('logs/test_set_results_IB_.txt', usecols=1)[-len(Beta):]
-        I_yt_test = np.loadtxt('logs/test_set_results_IB_.txt', usecols=2)[-len(Beta):]
+        I_xt_test_squared_IB = np.loadtxt(LOGS_DIR+'test_set_results_IB2.txt', usecols=1)[-len(Beta):]
+        I_yt_test_squared_IB = np.loadtxt(LOGS_DIR+'test_set_results_IB2.txt', usecols=2)[-len(Beta):]
+        I_xt_test = np.loadtxt(LOGS_DIR+'test_set_results_IB_.txt', usecols=1)[-len(Beta):]
+        I_yt_test = np.loadtxt(LOGS_DIR+'test_set_results_IB_.txt', usecols=2)[-len(Beta):]
 
-        #with open('logs/train_set_results_IB2' + '.txt', 'w') as file:
+        #with open(LOGS_DIR+'train_set_results_IB2' + '.txt', 'w') as file:
         #    np.savetxt(fname=file, fmt='%.5f', X=np.array([Beta, I_xt_squared_IB, I_yt_squared_IB]).T)
-        #with open('logs/train_set_results_IB' + '.txt', 'w') as file:
+        #with open(LOGS_DIR+'train_set_results_IB' + '.txt', 'w') as file:
         #    np.savetxt(fname=file, fmt='%.5f', X=np.array([Beta, I_xt, I_yt]).T)
 
         # plot IB curves
         plt.figure(2, figsize=(8, 3))
         #plot.plot_IB_curves(I_xt[:20], I_yt[:20], I_xt_test[:20], I_yt_test[:20], Beta[:20])
         plot.plot_IB_curves(I_xt, I_yt, I_xt_test, I_yt_test, Beta)
-        #plt.savefig('figures/IB_curves')
+        #plt.savefig(FIGS_DIR+'IB_curves')
 
         plt.figure(3, figsize=(8, 3))
         plot.plot_IB_curves(I_xt_squared_IB, I_yt_squared_IB, I_xt_test_squared_IB, I_yt_test_squared_IB, Beta)
-        #plt.savefig('figures/IB2_curves')
+        #plt.savefig(FIGS_DIR+'IB2_curves')
 
         # plot scatter plots
         plt.figure(4, figsize=(5, 5))
         #plot.plot_scatter_plots(Beta[[0, 2, 6, 8, 13, 16, 19, 24, 25]], 'IB_beta_')
         plot.plot_scatter_plots(Beta, 'IB_beta_')
-        #plt.savefig('figures/IB_scatter')
+        #plt.savefig(FIGS_DIR+'IB_scatter')
 
         #plt.figure(5, figsize=(5, 5))
         #plot.plot_scatter_plots(Beta[[0, 2, 6, 8, 10, 12, 19, 24, 25]], 'IB2_beta_')
         #plot.plot_scatter_plots(Beta[[0, 2, 5, 6, 8, 9, 10, 21, 26]], 'IB2_beta_')
         plot.plot_scatter_plots(Beta, 'IB2_beta_')
-        #plt.savefig('figures/IB2_scatter')
+        #plt.savefig(FIGS_DIR+'IB2_scatter')
 
         # plot inline
         #plt.figure(6, figsize=[4, 6])
         #plot.plot_inline(I_xt, I_yt, I_xt_squared_IB, I_yt_squared_IB, Beta)
-        #plt.savefig('figures/IB_inline.pdf', bbox_inches='tight')
+        #plt.savefig(FIGS_DIR+'IB_inline.pdf', bbox_inches='tight')
 
     plt.show()
 
@@ -107,7 +110,7 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
     y = tf.placeholder(dtype=tf.float32, shape=[None, 10])  # one-hot labels
 
     # define model
-    model = m.Model(input_ph=x, target_ph=y, learning_rate_ph=learning_rate, beta=beta, d=d, squared_IB_functional=squared_IB_functional)
+    model = m.Model(input_ph=x, target_ph=y, learning_rate_ph=learning_rate, d=d, squared_IB_functional=squared_IB_functional)
 
     # train model
     with tf.Session() as sess:
@@ -116,6 +119,9 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
 
         for epoch in range(n_epochs):
             start = time.time()
+
+            current_beta = beta
+
             epoch_loss, epoch_Ixt, epoch_Iyt = 0.0, 0.0, 0.0
 
             # update learning rate
@@ -137,11 +143,12 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
                     dm = sess.run(model.distance_matrix(), feed_dict={x: x_batch})
                     model.eta_optimizer.minimize(sess, feed_dict={model.distance_matrix_ph: dm})
 
+                cparams = {x: x_batch, y: y_batch, learning_rate: lr, model.beta: current_beta}
                 # apply gradient descent
-                sess.run(model.training_step(), feed_dict={x: x_batch, y: y_batch, learning_rate: lr})
+                sess.run(model.training_step(), feed_dict=cparams)
 
                 # compute loss (for diagnostics)
-                loss, Ixt, Iyt = sess.run(model.loss(), feed_dict={x: x_batch, y: y_batch, learning_rate: lr})
+                loss, Ixt, Iyt = sess.run(model.loss(), feed_dict=cparams)
                 epoch_loss += loss/n_mini_batches
                 epoch_Ixt += Ixt/n_mini_batches
                 epoch_Iyt += Iyt/n_mini_batches
@@ -157,7 +164,7 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
                 plt.figure(1, figsize=(14, 2.5))
                 plot.plot_training_figures(model.learning_curve, model.Ixt_curve, model.Iyt_curve, T, T_no_noise, train_labels[:20000], beta_string)
                 if save_logs:
-                    plt.savefig('figures/training_' + file_name)
+                    plt.savefig(FIGS_DIR+'training_' + file_name)
 
             log_sigma2 = sess.run(model.log_sigma2)
             log_eta2 = sess.run(model.log_eta2)
@@ -175,25 +182,25 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
 
         # save results to text files
         if save_logs:
-            plt.savefig('figures/training_' + file_name)
+            plt.savefig(FIGS_DIR+'training_' + file_name)
 
             # learning curves for training data set
-            with open('logs/learning_curves_' + file_name + '.txt', 'w') as file:
+            with open(LOGS_DIR+'learning_curves_' + file_name + '.txt', 'w') as file:
                 np.savetxt(fname=file, fmt='%.5f', X=np.array([model.learning_curve, model.Ixt_curve, model.Iyt_curve]).T)
 
             # scatter plots for training data
             T, T_no_noise = sess.run(model.encoder(), feed_dict={x: train_data})
-            with open('logs/hidden_units_' + file_name + '.txt', 'w') as file:
+            with open(LOGS_DIR+'hidden_units_' + file_name + '.txt', 'w') as file:
                 np.savetxt(fname=file, fmt='%.5f', X=np.array([np.argmax(train_labels, axis=1), T[:, 0], T[:, 1], T_no_noise[:, 0], T_no_noise[:, 1]]).T)
 
             # final results for test data set
             Ixt_test, Iyt_test = 0, 0
             for reps in range(25):
                 i = np.random.randint(low=0, high=len(data['test_data']), size=n_sgd)
-                _, Ixt, Iyt = sess.run(model.loss(), feed_dict={x: data['test_data'][i], y: data['test_labels'][i]})
+                _, Ixt, Iyt = sess.run(model.loss(), feed_dict={x: data['test_data'][i], y: data['test_labels'][i], model.beta: beta})
                 Ixt_test += Ixt/25
                 Iyt_test += Iyt/25
-            with open('logs/test_set_results_' + file_name[:3] + '.txt', 'a') as file:
+            with open(LOGS_DIR+'test_set_results_' + file_name[:3] + '.txt', 'a') as file:
                 file.write(file_name + ' ' + str(Ixt_test) + ' ' + str(Iyt_test) + '\n')
 
             print('\nsaved data logs and images\n')
