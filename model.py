@@ -12,7 +12,8 @@ class Model:  # (Basically uses 'get' functions with lazy loading. Structure ins
         self.d = d
         self.squared_IB_functional = squared_IB_functional
 
-        self.log_eta2 = tf.get_variable('log_eta2', dtype=tf.float32, initializer=0.001) # maximum likelihood estimate for log variance of mixture model
+        #self.log_eta2 = tf.get_variable('log_eta2', dtype=tf.float32, initializer=0.001) # maximum likelihood estimate for log variance of mixture model
+        self.log_eta2 = tf.get_variable('log_eta2', dtype=tf.float32, initializer=-1.) # maximum likelihood estimate for log variance of mixture model
         self.log_sigma2 = tf.constant(np.log(1), dtype=tf.float32)                       # encoder noise variance
 
         # for fitting the GMM

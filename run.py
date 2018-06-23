@@ -1,3 +1,4 @@
+from __future__ import print_function
 import matplotlib ; matplotlib.use('Agg')  # Allows us to run on a headless machine
 import plot
 import model as m
@@ -8,6 +9,7 @@ import time
 
 FIGS_DIR = 'figures/'
 LOGS_DIR = 'logs/'
+report_loss_every_epoch = 1
 
 def main():
 
@@ -18,6 +20,9 @@ def main():
     if True:
         # load training data
         data = load_mnist()
+
+        #build_and_train_model(data, beta=0.384, save_logs=True, squared_IB_functional=True)
+        build_and_train_model(data, beta=0.384, save_logs=True, squared_IB_functional=True)
 
         # train model
         for beta in Beta:
@@ -120,10 +125,13 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
         for epoch in range(n_epochs):
             start = time.time()
 
-            # Only compute and save losses every 10th epoch
-            save_losses = epoch % 10 == 0   
+            # Only compute and save losses every report_loss_every_epoch'th epoch
+            save_losses = epoch % report_loss_every_epoch == 0   
+            
             current_beta = beta
-
+            #if epoch < 10:
+            #    current_beta = beta * (epoch / 10.0)
+            
             epoch_loss, epoch_Ixt, epoch_Iyt = 0.0, 0.0, 0.0
 
             # update learning rate
@@ -141,9 +149,9 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
                 y_batch = train_labels[batch * n_sgd:(1 + batch) * n_sgd]
 
                 # estimate eta (i.e., the kernel width of the GMM)
-                if batch == 10:
-                    dm = sess.run(model.distance_matrix(), feed_dict={x: x_batch})
-                    model.eta_optimizer.minimize(sess, feed_dict={model.distance_matrix_ph: dm})
+                if batch == 0:
+                     dm = sess.run(model.distance_matrix(), feed_dict={x: x_batch})
+                     model.eta_optimizer.minimize(sess, feed_dict={model.distance_matrix_ph: dm})
 
                 cparams = {x: x_batch, y: y_batch, learning_rate: lr, model.beta: current_beta}
                 # apply gradient descent
@@ -156,32 +164,35 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
                     epoch_Ixt += Ixt/n_mini_batches
                     epoch_Iyt += Iyt/n_mini_batches
 
-                if epoch == 0 and batch == 0:
-                    model.update_learning_curves(epoch, loss, Ixt, Iyt)
+                # if epoch == 0 and batch == 0:
+                #     model.update_learning_curves(epoch, loss, Ixt, Iyt)
 
             if save_losses:
                 model.update_learning_curves(epoch, epoch_loss, epoch_Ixt, epoch_Iyt)
 
             # plot training figure (for diagnostics)
-            if epoch % 10 == 0:
+            if save_losses:
                 T, T_no_noise = sess.run(model.encoder(), feed_dict={x: train_data[:20000]})
                 plt.figure(1, figsize=(14, 2.5))
                 plot.plot_training_figures(model.learning_curve_epochs, model.learning_curve, model.Ixt_curve, model.Iyt_curve, T, T_no_noise, train_labels[:20000], beta_string)
                 if save_logs:
-                    plt.savefig(FIGS_DIR+'training_' + file_name)
+                    figurefilename = FIGS_DIR+'training_' + file_name
+                    print("* Updated ", figurefilename)
+                    plt.savefig(figurefilename)
 
             log_sigma2 = sess.run(model.log_sigma2)
             log_eta2 = sess.run(model.log_eta2)
 
             print()
             print('epoch', epoch+1, '/', n_epochs)
-            print('beta:', beta)
+            print('current/final beta:', current_beta, beta)
             print('learning rate:', lr)
-            print('loss:', epoch_loss)
-            print('mutual info I(X;T):', epoch_Ixt)
-            print('mutual info I(Y;T):', epoch_Iyt)
             print('noise variance:', np.exp(log_sigma2))
             print('kernel width:', np.exp(log_eta2))
+            if save_losses:
+                print('loss:', epoch_loss)
+                print('mutual info I(X;T):', epoch_Ixt)
+                print('mutual info I(Y;T):', epoch_Iyt)
             print('time:', time.time() - start)
 
         # save results to text files
