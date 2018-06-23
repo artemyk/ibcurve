@@ -5,25 +5,25 @@ import seaborn as sns
 import matplotlib.colors as mplc
 import matplotlib.ticker as mplt
 
-def plot_training_figures(loss, Ixt, Iyt, T, T_no_noise, labels, beta_string):
+def plot_training_figures(epochs, loss, Ixt, Iyt, T, T_no_noise, labels, beta_string):
 
     # plot learning curves
     plt.subplot(1, 6, 1)
     plt.cla()
-    plt.plot(loss)
+    plt.plot(epochs, loss)
     plt.xlabel('epoch')
     plt.ylabel('loss')
 
     plt.subplot(1, 6, 2)
     plt.cla()
-    plt.plot(Ixt)
+    plt.plot(epochs, Ixt)
     plt.xlabel('epoch')
     plt.ylabel('I(X;T)')
     plt.ylim(ymin=0)
 
     plt.subplot(1, 6, 3)
     plt.cla()
-    plt.plot(Iyt)
+    plt.plot(epochs, Iyt)
     plt.xlabel('epoch')
     plt.ylabel('I(Y;T)')
     plt.ylim(ymin=0, ymax=2.5)

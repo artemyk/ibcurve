@@ -21,6 +21,7 @@ class Model:  # (Basically uses 'get' functions with lazy loading. Structure ins
         self.eta_optimizer = tf.contrib.opt.ScipyOptimizerInterface(self.neg_llh_eta, var_list=[self.log_eta2])
 
         # learning curves
+        self.learning_curve_epochs = []
         self.learning_curve = []
         self.Ixt_curve = []
         self.Iyt_curve = []
@@ -90,7 +91,8 @@ class Model:  # (Basically uses 'get' functions with lazy loading. Structure ins
 
         return self._evaluate
 
-    def update_learning_curves(self, loss, Ixt, Iyt):
+    def update_learning_curves(self, epoch, loss, Ixt, Iyt):
+        self.learning_curve_epochs.append(epoch)
         self.learning_curve.append(loss)
         self.Ixt_curve.append(Ixt)
         self.Iyt_curve.append(Iyt)

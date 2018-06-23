@@ -120,6 +120,8 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
         for epoch in range(n_epochs):
             start = time.time()
 
+            # Only compute and save losses every 10th epoch
+            save_losses = epoch % 10 == 0   
             current_beta = beta
 
             epoch_loss, epoch_Ixt, epoch_Iyt = 0.0, 0.0, 0.0
@@ -139,7 +141,7 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
                 y_batch = train_labels[batch * n_sgd:(1 + batch) * n_sgd]
 
                 # estimate eta (i.e., the kernel width of the GMM)
-                if batch is 10:
+                if batch == 10:
                     dm = sess.run(model.distance_matrix(), feed_dict={x: x_batch})
                     model.eta_optimizer.minimize(sess, feed_dict={model.distance_matrix_ph: dm})
 
@@ -147,22 +149,24 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
                 # apply gradient descent
                 sess.run(model.training_step(), feed_dict=cparams)
 
-                # compute loss (for diagnostics)
-                loss, Ixt, Iyt = sess.run(model.loss(), feed_dict=cparams)
-                epoch_loss += loss/n_mini_batches
-                epoch_Ixt += Ixt/n_mini_batches
-                epoch_Iyt += Iyt/n_mini_batches
+                if save_losses:
+                    # compute loss (for diagnostics)
+                    loss, Ixt, Iyt = sess.run(model.loss(), feed_dict=cparams)
+                    epoch_loss += loss/n_mini_batches
+                    epoch_Ixt += Ixt/n_mini_batches
+                    epoch_Iyt += Iyt/n_mini_batches
 
-                if epoch is 0 and batch is 0:
-                    model.update_learning_curves(loss, Ixt, Iyt)
+                if epoch == 0 and batch == 0:
+                    model.update_learning_curves(epoch, loss, Ixt, Iyt)
 
-            model.update_learning_curves(epoch_loss, epoch_Ixt, epoch_Iyt)
+            if save_losses:
+                model.update_learning_curves(epoch, epoch_loss, epoch_Ixt, epoch_Iyt)
 
             # plot training figure (for diagnostics)
-            if epoch % 10 is 0:
+            if epoch % 10 == 0:
                 T, T_no_noise = sess.run(model.encoder(), feed_dict={x: train_data[:20000]})
                 plt.figure(1, figsize=(14, 2.5))
-                plot.plot_training_figures(model.learning_curve, model.Ixt_curve, model.Iyt_curve, T, T_no_noise, train_labels[:20000], beta_string)
+                plot.plot_training_figures(model.learning_curve_epochs, model.learning_curve, model.Ixt_curve, model.Iyt_curve, T, T_no_noise, train_labels[:20000], beta_string)
                 if save_logs:
                     plt.savefig(FIGS_DIR+'training_' + file_name)
 
