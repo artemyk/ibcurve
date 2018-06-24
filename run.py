@@ -9,7 +9,9 @@ import time
 
 FIGS_DIR = 'figures/'
 LOGS_DIR = 'logs/'
-report_loss_every_epoch = 1
+report_loss_every_epoch = 10
+beta_start_epoch   = 50
+beta_rampup_epochs = 50       # Slowly phase in beta over this many epochs . 0 for no rampup
 
 def main():
 
@@ -21,8 +23,7 @@ def main():
         # load training data
         data = load_mnist()
 
-        #build_and_train_model(data, beta=0.384, save_logs=True, squared_IB_functional=True)
-        build_and_train_model(data, beta=0.384, save_logs=True, squared_IB_functional=True)
+        build_and_train_model(data, beta=0.8, save_logs=True, squared_IB_functional=False)
 
         # train model
         for beta in Beta:
@@ -128,9 +129,12 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
             # Only compute and save losses every report_loss_every_epoch'th epoch
             save_losses = epoch % report_loss_every_epoch == 0   
             
-            current_beta = beta
-            #if epoch < 10:
-            #    current_beta = beta * (epoch / 10.0)
+            if epoch < beta_start_epoch:
+                current_beta = 0.0
+            elif epoch < beta_start_epoch + beta_rampup_epochs:
+                current_beta = beta * ((epoch-beta_start_epoch) / float(beta_rampup_epochs))
+            else:
+                current_beta = beta
             
             epoch_loss, epoch_Ixt, epoch_Iyt = 0.0, 0.0, 0.0
 
@@ -148,18 +152,24 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
                 x_batch = train_data[batch * n_sgd:(1 + batch) * n_sgd]
                 y_batch = train_labels[batch * n_sgd:(1 + batch) * n_sgd]
 
+                cparams = {x: x_batch, y: y_batch, learning_rate: lr, model.beta: current_beta}
+                
                 # estimate eta (i.e., the kernel width of the GMM)
                 if batch == 0:
-                     dm = sess.run(model.distance_matrix(), feed_dict={x: x_batch})
-                     model.eta_optimizer.minimize(sess, feed_dict={model.distance_matrix_ph: dm})
+                    dm = sess.run(model.distance_matrix(), feed_dict={x: x_batch})
+                    model.eta_optimizer.minimize(sess, feed_dict={model.distance_matrix_ph: dm})
 
-                cparams = {x: x_batch, y: y_batch, learning_rate: lr, model.beta: current_beta}
+                    #if epoch >= beta_start_epoch + beta_rampup_epochs and hasattr(model, 'sigma_optimizer'):
+                    #    model.sigma_optimizer.minimize(sess, feed_dict=cparams)
+                        
                 # apply gradient descent
                 sess.run(model.training_step(), feed_dict=cparams)
 
                 if save_losses:
                     # compute loss (for diagnostics)
-                    loss, Ixt, Iyt = sess.run(model.loss(), feed_dict=cparams)
+                    loss = sess.run(model.loss(), feed_dict=cparams)
+                    Ixt  = sess.run(model.Ixt(), feed_dict=cparams)
+                    Iyt  = sess.run(model.Iyt(), feed_dict=cparams)
                     epoch_loss += loss/n_mini_batches
                     epoch_Ixt += Ixt/n_mini_batches
                     epoch_Iyt += Iyt/n_mini_batches
@@ -233,8 +243,8 @@ def load_mnist():
     test_labels = test_labels[permutation]
 
     # normalize, reshape, and convert to one-hot vectors
-    train_data = np.reshape(train_data, (-1, 784)) / (255/2) - 1
-    test_data = np.reshape(test_data, (-1, 784)) / (255/2) - 1
+    train_data = np.reshape(train_data, (-1, 784)) / (255./2.) - 1.
+    test_data = np.reshape(test_data, (-1, 784)) / (255./2.) - 1.
     train_labels = one_hot(train_labels)
     test_labels = one_hot(test_labels)
 

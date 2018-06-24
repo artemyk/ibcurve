@@ -2,6 +2,8 @@ import tensorflow as tf
 import numpy as np
 import entropy
 
+trainable_sigma = False
+
 class Model:  # (Basically uses 'get' functions with lazy loading. Structure inspired by https://danijar.com/structuring-your-tensorflow-models/)
 
     def __init__(self, input_ph, target_ph, learning_rate_ph, d, squared_IB_functional):
@@ -14,12 +16,22 @@ class Model:  # (Basically uses 'get' functions with lazy loading. Structure ins
 
         #self.log_eta2 = tf.get_variable('log_eta2', dtype=tf.float32, initializer=0.001) # maximum likelihood estimate for log variance of mixture model
         self.log_eta2 = tf.get_variable('log_eta2', dtype=tf.float32, initializer=-1.) # maximum likelihood estimate for log variance of mixture model
-        self.log_sigma2 = tf.constant(np.log(1), dtype=tf.float32)                       # encoder noise variance
+        # encoder noise variance
+        if trainable_sigma:
+            if True:
+                self.log_sigma2 = tf.get_variable('log_sigma2', dtype=tf.float32, initializer=0.)
+                self.sigma_optimizer = tf.contrib.opt.ScipyOptimizerInterface(self.loss(), var_list=[self.log_sigma2])
+            else:
+                with tf.variable_scope('encoder'):
+                    self.log_sigma2 = tf.get_variable('log_sigma2', dtype=tf.float32, initializer=1.)                   
+        else:
+            self.log_sigma2 = tf.constant(np.log(1), dtype=tf.float32)
 
         # for fitting the GMM
         self.distance_matrix_ph = tf.placeholder(dtype=tf.float32, shape=[None, None])  # placeholder to speed up scipy optimizer
         self.neg_llh_eta = entropy.GMM_negative_LLH(self.distance_matrix_ph, self.log_eta2, self.d)   # negative log-likelihood for the 'width' of the GMM
         self.eta_optimizer = tf.contrib.opt.ScipyOptimizerInterface(self.neg_llh_eta, var_list=[self.log_eta2])
+        
 
         # learning curves
         self.learning_curve_epochs = []
@@ -62,25 +74,33 @@ class Model:  # (Basically uses 'get' functions with lazy loading. Structure ins
             self._distance_matrix = entropy.pairwise_distance(T_no_noise)
 
         return self._distance_matrix
-
-    def loss(self):
-        if not hasattr(self, '_loss'):
-            cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.target_ph, logits=self.decoder()))
+    
+    def Ixt(self):
+        if not hasattr(self, '_Ixt'):
             H_T = entropy.GMM_entropy(self.distance_matrix(), tf.log(tf.exp(self.log_sigma2) + tf.exp(self.log_eta2)), self.d, 'upper')
             H_T_given_X = entropy.Gaussian_entropy(self.d, self.log_sigma2)
             self._Ixt = H_T - H_T_given_X
+        return self._Ixt
+    
+    def Iyt(self):
+        if not hasattr(self, '_Iyt'):
+            cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.target_ph, logits=self.decoder()))
             self._Iyt = tf.log(10.0) - cross_entropy
-            if self.squared_IB_functional:
-                self._loss = tf.scalar_mul(self.beta, tf.square(self._Ixt)) - self._Iyt
-            else:
-                self._loss = tf.scalar_mul(self.beta, self._Ixt) - self._Iyt
+        return self._Iyt
 
-        return self._loss, self._Ixt, self._Iyt
+    def loss(self):
+        if not hasattr(self, '_loss'):
+            compression_term = self.Ixt()
+            if self.squared_IB_functional:
+                compression = tf.square(compression_term)
+            self._loss = tf.scalar_mul(self.beta, compression_term) - self.Iyt()
+
+        return self._loss
 
     def training_step(self):
         if not hasattr(self, '_training_step'):
             adam_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate_ph, epsilon=0.0001)
-            loss, _, _ = self.loss()
+            loss = self.loss()
             self._training_step = adam_optimizer.minimize(loss, var_list=tf.trainable_variables(scope='encoder') + tf.trainable_variables('decoder'))
 
         return self._training_step
