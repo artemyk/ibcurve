@@ -92,7 +92,7 @@ class Model:  # (Basically uses 'get' functions with lazy loading. Structure ins
         if not hasattr(self, '_loss'):
             compression_term = self.Ixt()
             if self.squared_IB_functional:
-                compression = tf.square(compression_term)
+                compression_term = tf.square(compression_term)
             self._loss = tf.scalar_mul(self.beta, compression_term) - self.Iyt()
 
         return self._loss
