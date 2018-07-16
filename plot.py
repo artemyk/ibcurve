@@ -5,7 +5,7 @@ import seaborn as sns
 import matplotlib.colors as mplc
 import matplotlib.ticker as mplt
 
-def plot_training_figures(epochs, loss, Ixt, Iyt, T, T_no_noise, labels, beta_string):
+def plot_training_figures(epochs, loss, Ixt, Iyt, T, T_no_noise, labels, beta_string, model_name):
 
     # plot learning curves
     plt.subplot(1, 6, 1)
@@ -48,9 +48,11 @@ def plot_training_figures(epochs, loss, Ixt, Iyt, T, T_no_noise, labels, beta_st
     for label in range(10):
         ii = np.argmax(labels, axis=1) == label
         plt.scatter(T_no_noise[ii, 0], T_no_noise[ii, 1], marker='.', alpha=0.04, label=label, edgecolor='none')
+    '''
     leg = plt.legend()
     for lh in leg.legendHandles:
         lh.set_alpha(1)
+    '''
     max_xy = np.max(np.abs(T_no_noise), axis=0)
     plt.xlim([-1.25 * max_xy[0], 1.25 * max_xy[0]])
     plt.ylim([-1.25 * max_xy[1], 1.25 * max_xy[1]])
@@ -62,8 +64,8 @@ def plot_training_figures(epochs, loss, Ixt, Iyt, T, T_no_noise, labels, beta_st
     plt.xlim([-1.25 * max_xy[0], 1.25 * max_xy[0]])
     plt.ylim([-1.25 * max_xy[1], 1.25 * max_xy[1]])
 
+    plt.suptitle('beta = ' + beta_string + ', ' + model_name, fontsize=12)
     plt.tight_layout()
-    plt.suptitle('beta = ' + beta_string, fontsize=12)
     plt.pause(0.01)
 
 
@@ -155,7 +157,7 @@ def plot_inline(I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_yt_squared_
             plt.xlabel('$I(X;T)$')
 
         plt.ylabel('$I(Y;T)$')
-        plt.ylim([-1, 3.5])
+        plt.ylim([-1, 4.0])
         plt.xlim([-2, 8.1])
         plt.yticks([-1, 0, 1, 2, 3, 4])
         plt.gca().tick_params(axis='both', which='major', pad=1)
@@ -174,22 +176,26 @@ def plot_inline(I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_yt_squared_
         # scatter plots
         for i, beta in enumerate(Beta):
             scale = 0.027
+            aspect_ratio = (plt.xlim()[1]-plt.xlim()[0]) / (plt.xlim()[1]-plt.xlim()[0] + plt.ylim()[1]-plt.ylim()[0])
+
             if beta == 0:
-                scale /= 10
+                scale /= 9
 
             # load data
             beta_string = '%.3f' % beta
             data = np.loadtxt('logs/hidden_units_' + file_name + beta_string.replace('.', '-') + '.txt')
-            labels = data[:1000, 0]
-            T = data[:1000, 1:3]
+            labels = data[:2000, 0]
+            T = data[:2000, 1:3]
 
             # normalize
-            T = T - np.mean(T, 0)  # np.array([x_pos, y_pos])
+            #T = T - np.mean(T, 0)  # np.array([x_pos, y_pos])
+            T[:, 0] = T[:, 0] - np.percentile(T[:, 0], 99) + 0.5*(np.percentile(T[:, 0], 99) - np.percentile(T[:, 0], 0.01))
+            T[:, 1] = T[:, 1] - np.percentile(T[:, 1], 99) + 0.5*(np.percentile(T[:, 1], 99) - np.percentile(T[:, 1], 0.01))
             T = scale * T  # / np.std(T, 0)
 
             # determine position
-            width = 1.25
-            height = 1.05
+            width = 1.35
+            height = width * aspect_ratio
 
             if i in above_curve:
                 x_pos = I_xt[i] - width / 2 - 0.5
@@ -212,7 +218,7 @@ def plot_inline(I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_yt_squared_
 
             # plot
             plt.text(x_pos - width/2 - 0, y_pos + height/2 + 0.1, r'$\beta$ = %.2f' % beta, fontsize=7)
-            plt.scatter(T[:, 0] + x_pos, T[:, 1] + y_pos, c=labels, cmap='tab10', marker='.', edgecolor='none', alpha=0.05)
+            plt.scatter(T[:, 0] + x_pos, aspect_ratio*T[:, 1] + y_pos, c=labels, cmap='tab10', marker='.', edgecolor='none', alpha=0.08)
 
             # draw box
             plt.gca().add_patch(
@@ -232,7 +238,6 @@ def plot_inline(I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_yt_squared_
     legend.get_frame().set_alpha(1.0)
 
     plt.tight_layout()
-
 
     #cbaxes = plt.gcf().add_axes([1.04, 0.22, 0.03, 0.7])
     #plt.colorbar(sm, label=r'$\beta$', cax=cbaxes, format='%d', ticks=[0, 1, 2])

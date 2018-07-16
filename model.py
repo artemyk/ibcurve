@@ -6,13 +6,14 @@ trainable_sigma = False
 
 class Model:  # (Basically uses 'get' functions with lazy loading. Structure inspired by https://danijar.com/structuring-your-tensorflow-models/)
 
-    def __init__(self, input_ph, target_ph, learning_rate_ph, d, squared_IB_functional):
+    def __init__(self, input_ph, target_ph, learning_rate_ph, beta_ph, d, squared_IB_functional, name):
         self.input_ph = input_ph
         self.target_ph = target_ph
         self.learning_rate_ph = learning_rate_ph
-        self.beta = tf.placeholder(tf.float32, shape=(), name="beta")
+        self.beta_ph = beta_ph
         self.d = d
         self.squared_IB_functional = squared_IB_functional
+        self.name = name
 
         #self.log_eta2 = tf.get_variable('log_eta2', dtype=tf.float32, initializer=0.001) # maximum likelihood estimate for log variance of mixture model
         self.log_eta2 = tf.get_variable('log_eta2', dtype=tf.float32, initializer=-1.) # maximum likelihood estimate for log variance of mixture model
@@ -31,7 +32,6 @@ class Model:  # (Basically uses 'get' functions with lazy loading. Structure ins
         self.distance_matrix_ph = tf.placeholder(dtype=tf.float32, shape=[None, None])  # placeholder to speed up scipy optimizer
         self.neg_llh_eta = entropy.GMM_negative_LLH(self.distance_matrix_ph, self.log_eta2, self.d)   # negative log-likelihood for the 'width' of the GMM
         self.eta_optimizer = tf.contrib.opt.ScipyOptimizerInterface(self.neg_llh_eta, var_list=[self.log_eta2])
-        
 
         # learning curves
         self.learning_curve_epochs = []
@@ -93,7 +93,7 @@ class Model:  # (Basically uses 'get' functions with lazy loading. Structure ins
             compression_term = self.Ixt()
             if self.squared_IB_functional:
                 compression_term = tf.square(compression_term)
-            self._loss = tf.scalar_mul(self.beta, compression_term) - self.Iyt()
+            self._loss = tf.scalar_mul(self.beta_ph, compression_term) - self.Iyt()
 
         return self._loss
 
@@ -101,7 +101,7 @@ class Model:  # (Basically uses 'get' functions with lazy loading. Structure ins
         if not hasattr(self, '_training_step'):
             adam_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate_ph, epsilon=0.0001)
             loss = self.loss()
-            self._training_step = adam_optimizer.minimize(loss, var_list=tf.trainable_variables(scope='encoder') + tf.trainable_variables('decoder'))
+            self._training_step = adam_optimizer.minimize(loss, var_list=tf.trainable_variables(scope=self.name + '/encoder') + tf.trainable_variables(self.name + '/decoder'))
 
         return self._training_step
 

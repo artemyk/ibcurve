@@ -1,5 +1,5 @@
 from __future__ import print_function
-import matplotlib ; matplotlib.use('Agg')  # Allows us to run on a headless machine
+#import matplotlib; matplotlib.use('Agg')  # Allows us to run on a headless machine
 import plot
 import model as m
 import tensorflow as tf
@@ -9,21 +9,23 @@ import time
 
 FIGS_DIR = 'figures/'
 LOGS_DIR = 'logs/'
-report_loss_every_epoch = 10
-beta_start_epoch   = 50
-beta_rampup_epochs = 50       # Slowly phase in beta over this many epochs . 0 for no rampup
+report_loss_every_epoch = 20
+beta_start_epoch   = 0
+beta_rampup_epochs = 0      # Slowly phase in beta over this many epochs . 0 for no rampup
+n_data = 2000               # consider a small subset of data (for code testing only)
+n_models = 3                # simultaneously train n_models at once and save results for the best model only
 
 def main():
 
     # build and train models for different values of beta
 
-    Beta = np.append(0, np.append(10**np.linspace(start=-1.1, stop=0.2, num=20), 3))
-    #Beta = np.array([0.0, 0.05, 0.11, 0.13, 0.15, 0.2, 0.3, 0.4, 0.5, 0.8, 1.0, 2.0]) # sparse sweep
+    #Beta = np.append(0, np.append(10**np.linspace(start=-1.1, stop=0.2, num=20), 3))
+    Beta = np.array([0.0, 0.05, 0.11, 0.13, 0.15, 0.2, 0.3, 0.4, 0.5, 0.8, 1.0, 2.0]) # sparse sweep
     if True:
         # load training data
         data = load_mnist()
 
-        build_and_train_model(data, beta=0.8, save_logs=True, squared_IB_functional=False)
+        #build_and_train_model(data, beta=0.8, save_logs=True, squared_IB_functional=False)
 
         # train model
         for beta in Beta:
@@ -32,9 +34,8 @@ def main():
             build_and_train_model(data, beta=beta, save_logs=True, squared_IB_functional=False)
 
 
-
     # load data from text files and plot figures
-    if False:
+    if True:
         # load data for IB curves
         I_xt_squared_IB, I_yt_squared_IB, I_xt, I_yt = [], [], [], []
         for beta in Beta:
@@ -63,31 +64,27 @@ def main():
         #    np.savetxt(fname=file, fmt='%.5f', X=np.array([Beta, I_xt, I_yt]).T)
 
         # plot IB curves
-        plt.figure(2, figsize=(8, 3))
-        #plot.plot_IB_curves(I_xt[:20], I_yt[:20], I_xt_test[:20], I_yt_test[:20], Beta[:20])
+        plt.figure(100, figsize=(8, 3))
         plot.plot_IB_curves(I_xt, I_yt, I_xt_test, I_yt_test, Beta)
-        #plt.savefig(FIGS_DIR+'IB_curves')
+        plt.savefig(FIGS_DIR+'IB_curves')
 
-        plt.figure(3, figsize=(8, 3))
+        plt.figure(101, figsize=(8, 3))
         plot.plot_IB_curves(I_xt_squared_IB, I_yt_squared_IB, I_xt_test_squared_IB, I_yt_test_squared_IB, Beta)
-        #plt.savefig(FIGS_DIR+'IB2_curves')
+        plt.savefig(FIGS_DIR+'IB2_curves')
 
         # plot scatter plots
-        plt.figure(4, figsize=(5, 5))
-        #plot.plot_scatter_plots(Beta[[0, 2, 6, 8, 13, 16, 19, 24, 25]], 'IB_beta_')
+        plt.figure(102, figsize=(5, 5))
         plot.plot_scatter_plots(Beta, 'IB_beta_')
-        #plt.savefig(FIGS_DIR+'IB_scatter')
+        plt.savefig(FIGS_DIR+'IB_scatter')
 
-        #plt.figure(5, figsize=(5, 5))
-        #plot.plot_scatter_plots(Beta[[0, 2, 6, 8, 10, 12, 19, 24, 25]], 'IB2_beta_')
-        #plot.plot_scatter_plots(Beta[[0, 2, 5, 6, 8, 9, 10, 21, 26]], 'IB2_beta_')
+        plt.figure(103, figsize=(5, 5))
         plot.plot_scatter_plots(Beta, 'IB2_beta_')
-        #plt.savefig(FIGS_DIR+'IB2_scatter')
+        plt.savefig(FIGS_DIR+'IB2_scatter')
 
         # plot inline
-        #plt.figure(6, figsize=[4, 6])
-        #plot.plot_inline(I_xt, I_yt, I_xt_squared_IB, I_yt_squared_IB, Beta)
-        #plt.savefig(FIGS_DIR+'IB_inline.pdf', bbox_inches='tight')
+        plt.figure(104, figsize=[4, 6])
+        plot.plot_inline(I_xt, I_yt, I_xt_squared_IB, I_yt_squared_IB, Beta)
+        plt.savefig(FIGS_DIR+'IB_inline.pdf', bbox_inches='tight')
 
     plt.show()
 
@@ -105,18 +102,22 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
     # hyper-parameters
     d = 2                                                       # number of bottleneck hidden units
     n_sgd = 128                                                 # batch size
-    n_epochs = 300                                              # number of epochs
+    n_epochs = 200 #300                                              # number of epochs
     initial_lr = 0.0001                                         # initial learning rate
     learning_rate = tf.placeholder(dtype=tf.float32, shape=())  # learning rate placeholder
-
-    beta_ph = tf.placeholder(dtype=tf.float32, shape=()) # not used
+    beta_ph = tf.placeholder(dtype=tf.float32, shape=())        # beta placeholder
 
     # define placeholders
     x = tf.placeholder(dtype=tf.float32, shape=[None, 784]) # digit images
     y = tf.placeholder(dtype=tf.float32, shape=[None, 10])  # one-hot labels
 
-    # define model
-    model = m.Model(input_ph=x, target_ph=y, learning_rate_ph=learning_rate, d=d, squared_IB_functional=squared_IB_functional)
+    # define models
+    models = []
+    for n in range(n_models):
+        model_name = 'model_' + str(n)
+        with tf.variable_scope(model_name):
+            model = m.Model(input_ph=x, target_ph=y, learning_rate_ph=learning_rate, beta_ph=beta_ph, d=d, squared_IB_functional=squared_IB_functional, name=model_name)
+        models.append(model)
 
     # train model
     with tf.Session() as sess:
@@ -128,7 +129,8 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
 
             # Only compute and save losses every report_loss_every_epoch'th epoch
             save_losses = epoch % report_loss_every_epoch == 0   
-            
+
+            # change beta during training
             if epoch < beta_start_epoch:
                 current_beta = 0.0
             elif epoch < beta_start_epoch + beta_rampup_epochs:
@@ -136,7 +138,9 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
             else:
                 current_beta = beta
             
-            epoch_loss, epoch_Ixt, epoch_Iyt = 0.0, 0.0, 0.0
+            epoch_loss = np.zeros(len(models))
+            epoch_Ixt = np.zeros(len(models))
+            epoch_Iyt = np.zeros(len(models))
 
             # update learning rate
             #lr = initial_lr * 0.8 ** np.floor(epoch / 20)
@@ -152,47 +156,50 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
                 x_batch = train_data[batch * n_sgd:(1 + batch) * n_sgd]
                 y_batch = train_labels[batch * n_sgd:(1 + batch) * n_sgd]
 
-                cparams = {x: x_batch, y: y_batch, learning_rate: lr, model.beta: current_beta}
-                
-                # estimate eta (i.e., the kernel width of the GMM)
-                if batch == 0:
-                    dm = sess.run(model.distance_matrix(), feed_dict={x: x_batch})
-                    model.eta_optimizer.minimize(sess, feed_dict={model.distance_matrix_ph: dm})
+                cparams = {x: x_batch, y: y_batch, learning_rate: lr, beta_ph: current_beta}
+
+                for i, model in enumerate(models):
+                    # estimate eta (i.e., the kernel width of the GMM)
+                    if batch == 0:
+                        dm = sess.run(model.distance_matrix(), feed_dict={x: x_batch})
+                        model.eta_optimizer.minimize(sess, feed_dict={model.distance_matrix_ph: dm})
 
                     #if epoch >= beta_start_epoch + beta_rampup_epochs and hasattr(model, 'sigma_optimizer'):
                     #    model.sigma_optimizer.minimize(sess, feed_dict=cparams)
                         
-                # apply gradient descent
-                sess.run(model.training_step(), feed_dict=cparams)
+                    # apply gradient descent
+                    sess.run(model.training_step(), feed_dict=cparams)
 
+                    if save_losses:
+                        # compute loss (for diagnostics)
+                        loss = sess.run(model.loss(), feed_dict=cparams)
+                        Ixt  = sess.run(model.Ixt(), feed_dict=cparams)
+                        Iyt  = sess.run(model.Iyt(), feed_dict=cparams)
+                        epoch_loss[i] += loss/n_mini_batches
+                        epoch_Ixt[i] += Ixt/n_mini_batches
+                        epoch_Iyt[i] += Iyt/n_mini_batches
+
+                    if epoch == 0 and batch == 0:
+                        model.update_learning_curves(epoch, loss, Ixt, Iyt)
+
+            for i, model in enumerate(models):
                 if save_losses:
-                    # compute loss (for diagnostics)
-                    loss = sess.run(model.loss(), feed_dict=cparams)
-                    Ixt  = sess.run(model.Ixt(), feed_dict=cparams)
-                    Iyt  = sess.run(model.Iyt(), feed_dict=cparams)
-                    epoch_loss += loss/n_mini_batches
-                    epoch_Ixt += Ixt/n_mini_batches
-                    epoch_Iyt += Iyt/n_mini_batches
+                    model.update_learning_curves(epoch, epoch_loss[i], epoch_Ixt[i], epoch_Iyt[i])
 
-                # if epoch == 0 and batch == 0:
-                #     model.update_learning_curves(epoch, loss, Ixt, Iyt)
+                # plot training figure (for diagnostics)
+                if save_losses:
+                    T, T_no_noise = sess.run(model.encoder(), feed_dict={x: train_data[:]})  # originally used 20000 examples
+                    plt.figure(i, figsize=(12, 2))
+                    plt.clf()
+                    plot.plot_training_figures(model.learning_curve_epochs, model.learning_curve, model.Ixt_curve, model.Iyt_curve, T, T_no_noise, train_labels[:], beta_string, model.name)
+                    if save_logs:
+                        figurefilename = FIGS_DIR+'training_' + file_name + '_' + model.name
+                        print("* Updated ", figurefilename)
+                        plt.savefig(figurefilename)
 
-            if save_losses:
-                model.update_learning_curves(epoch, epoch_loss, epoch_Ixt, epoch_Iyt)
-
-            # plot training figure (for diagnostics)
-            if save_losses:
-                T, T_no_noise = sess.run(model.encoder(), feed_dict={x: train_data[:20000]})
-                plt.figure(1, figsize=(14, 2.5))
-                plot.plot_training_figures(model.learning_curve_epochs, model.learning_curve, model.Ixt_curve, model.Iyt_curve, T, T_no_noise, train_labels[:20000], beta_string)
-                if save_logs:
-                    figurefilename = FIGS_DIR+'training_' + file_name
-                    print("* Updated ", figurefilename)
-                    plt.savefig(figurefilename)
-
-            log_sigma2 = sess.run(model.log_sigma2)
-            log_eta2 = sess.run(model.log_eta2)
-
+            # print output
+            log_sigma2 = sess.run(models[0].log_sigma2)
+            log_eta2 = sess.run(models[0].log_eta2)
             print()
             print('epoch', epoch+1, '/', n_epochs)
             print('current/final beta:', current_beta, beta)
@@ -200,14 +207,22 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
             print('noise variance:', np.exp(log_sigma2))
             print('kernel width:', np.exp(log_eta2))
             if save_losses:
-                print('loss:', epoch_loss)
-                print('mutual info I(X;T):', epoch_Ixt)
-                print('mutual info I(Y;T):', epoch_Iyt)
+                print('loss:', epoch_loss[0])
+                print('mutual info I(X;T):', epoch_Ixt[0])
+                print('mutual info I(Y;T):', epoch_Iyt[0])
             print('time:', time.time() - start)
 
         # save results to text files
         if save_logs:
-            plt.savefig(FIGS_DIR+'training_' + file_name)
+
+            # only log data for the best model (i.e., the lowest loss)
+            best_model = models[0]
+            for model in models:
+                if model.learning_curve[-1] < best_model.learning_curve[-1]:
+                    best_model = model
+            model = best_model
+
+            #plt.savefig(FIGS_DIR+'training_' + file_name)
 
             # learning curves for training data set
             with open(LOGS_DIR+'learning_curves_' + file_name + '.txt', 'w') as file:
@@ -222,7 +237,9 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
             Ixt_test, Iyt_test = 0, 0
             for reps in range(25):
                 i = np.random.randint(low=0, high=len(data['test_data']), size=n_sgd)
-                _, Ixt, Iyt = sess.run(model.loss(), feed_dict={x: data['test_data'][i], y: data['test_labels'][i], model.beta: beta})
+                Ixt = sess.run(model.Ixt(), feed_dict={x: data['test_data'][i]})
+                Iyt = sess.run(model.Iyt(), feed_dict={x: data['test_data'][i], y: data['test_labels'][i]})
+
                 Ixt_test += Ixt/25
                 Iyt_test += Iyt/25
             with open(LOGS_DIR+'test_set_results_' + file_name[:3] + '.txt', 'a') as file:
@@ -248,7 +265,7 @@ def load_mnist():
     train_labels = one_hot(train_labels)
     test_labels = one_hot(test_labels)
 
-    data = {'train_data': train_data, 'train_labels': train_labels, 'test_data': test_data, 'test_labels': test_labels}
+    data = {'train_data': train_data[:n_data], 'train_labels': train_labels[:n_data], 'test_data': test_data[:n_data], 'test_labels': test_labels[:n_data]}
 
     return data
 
