@@ -27,28 +27,30 @@ I_yt_test_squared_IB = np.loadtxt(LOGS_DIR+'test_set_results_IB2.txt', usecols=2
 I_xt_test = np.loadtxt(LOGS_DIR+'test_set_results_IB_.txt', usecols=1)[-len(BetaValues):]
 I_yt_test = np.loadtxt(LOGS_DIR+'test_set_results_IB_.txt', usecols=2)[-len(BetaValues):]
 
-if False:
+if True:
     # plot IB curves
     plt.figure(100, figsize=(8, 3))
     plot.plot_IB_curves(I_xt, I_yt, I_xt_test, I_yt_test, BetaValues)
-    plt.savefig(FIGS_DIR+'IB_curves')
+    plt.savefig(FIGS_DIR+'IB_curves.pdf', bbox_inches='tight')
 
     plt.figure(101, figsize=(8, 3))
     plot.plot_IB_curves(I_xt_squared_IB, I_yt_squared_IB, I_xt_test_squared_IB, I_yt_test_squared_IB, BetaValues)
-    plt.savefig(FIGS_DIR+'IB2_curves')
+    plt.savefig(FIGS_DIR+'IB2_curves.pdf', bbox_inches='tight')
 
+if True:
     # plot scatter plots
     plt.figure(102, figsize=(5, 5))
     plot.plot_scatter_plots(BetaValues, 'IB_beta_')
-    plt.savefig(FIGS_DIR+'IB_scatter')
+    plt.savefig(FIGS_DIR+'IB_scatter.png', dpi=300)
 
     plt.figure(103, figsize=(5, 5))
     plot.plot_scatter_plots(BetaValues, 'IB2_beta_')
-    plt.savefig(FIGS_DIR+'IB2_scatter')
+    plt.savefig(FIGS_DIR+'IB2_scatter.png', dpi=300)
 
-# plot inline
-plt.figure(104, figsize=[4, 6])
-plot.plot_inline(I_xt, I_yt, I_xt_squared_IB, I_yt_squared_IB, BetaValues)
-plt.savefig(FIGS_DIR+'IB_inline.pdf', bbox_inches='tight')
+if True:
+    # plot inline
+    plt.figure(104, figsize=[4, 6])
+    plot.plot_inline(I_xt, I_yt, I_xt_squared_IB, I_yt_squared_IB, BetaValues)
+    plt.savefig(FIGS_DIR+'IB_inline.pdf', bbox_inches='tight')
 
 plt.show()

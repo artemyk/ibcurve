@@ -109,7 +109,7 @@ def plot_scatter_plots(Beta, file_name):
 
         plt.subplot(np.ceil(np.sqrt(len(Beta))), np.ceil(np.sqrt(len(Beta))), i + 1)
         plt.cla()
-        plt.scatter(T[:, 0], T[:, 1], c=labels, cmap='tab10', marker='.', edgecolor='none', alpha=0.1)
+        plt.scatter(T[:, 0], T[:, 1], c=labels, cmap='tab10', marker='.', edgecolor='none', alpha=0.1, s=2)
         max_xy = np.max(np.abs(T), axis=0)
         if i > 0:
             plt.xlim([-1.6 * max_xy[0], 1.6 * max_xy[0]])
