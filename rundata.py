@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import os
+import tensorflow as tf
 
 BetaValues = np.array([0.0, 0.05, 0.11, 0.13, 0.15, 0.2, 0.3, 0.4, 0.5, 0.8, 1.0, 2.0]) # sparse sweep
 BetaValues = np.sort(np.concatenate([BetaValues, np.array([0.25, 0.35, 0.45, 0.55, 0.6, 0.65, 0.7])]))
@@ -15,11 +16,10 @@ report_loss_every_epoch = 20
 beta_start_epoch   = 0
 beta_rampup_epochs = 0      # Slowly phase in beta over this many epochs . 0 for no rampup
 n_data = None               # consider a small subset of data (for code testing only)
-n_models = 10               # simultaneously train n_models at once and save results for the best model only
+n_models = 20               # simultaneously train n_models at once and save results for the best model only
 
 
 def main():
-    import tensorflow as tf
 
     # build and train models for different values of beta
     if not os.path.exists(FIGS_DIR):
