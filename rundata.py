@@ -1,15 +1,13 @@
 from __future__ import print_function
 import plot
 import model as m
-import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 import time
 import os
 
 BetaValues = np.array([0.0, 0.05, 0.11, 0.13, 0.15, 0.2, 0.3, 0.4, 0.5, 0.8, 1.0, 2.0]) # sparse sweep
-BetaValues = np.array([0.25, 0.35, 0.45, 0.55, 0.6, 0.65, 0.7])
-
+BetaValues = np.sort(np.concatenate([BetaValues, np.array([0.25, 0.35, 0.45, 0.55, 0.6, 0.65, 0.7])]))
 
 FIGS_DIR = 'figures/'
 LOGS_DIR = 'logs/'
@@ -21,6 +19,7 @@ n_models = 10               # simultaneously train n_models at once and save res
 
 
 def main():
+    import tensorflow as tf
 
     # build and train models for different values of beta
     if not os.path.exists(FIGS_DIR):

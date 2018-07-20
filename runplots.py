@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import plot
-from run import BetaValues, LOGS_DIR, FIGS_DIR
+from rundata import BetaValues, LOGS_DIR, FIGS_DIR
 
 # load data from text files and plot figures
 
