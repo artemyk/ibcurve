@@ -141,7 +141,7 @@ def plot_inline(I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_yt_squared_
             above_curve = [0, 4, 10]
             below_curve = [7, 8]
 
-            plt.text(-3.75, 0.95 * 4, 'A', fontsize=20, fontweight=400)
+            plt.text(-4.5, 0.95 * 4, 'A', fontsize=20, fontweight=400)
 
         else:
             plt.subplot(2, 1, 2)
@@ -152,7 +152,7 @@ def plot_inline(I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_yt_squared_
             above_curve = [0, 4, 11]
             below_curve = [1, 6]
 
-            plt.text(-3.75, 0.95 * 4, 'B', fontsize=20, fontweight=400)
+            plt.text(-4.5, 0.95 * 4, 'B', fontsize=20, fontweight=400)
 
             plt.xlabel('$I(X;T)$')
 
@@ -218,7 +218,7 @@ def plot_inline(I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_yt_squared_
 
             # plot
             plt.text(x_pos - width/2 - 0, y_pos + height/2 + 0.1, r'$\beta$ = %.2f' % beta, fontsize=7)
-            plt.scatter(T[:, 0] + x_pos, aspect_ratio*T[:, 1] + y_pos, c=labels, cmap='tab10', marker='.', edgecolor='none', alpha=0.08)
+            plt.scatter(T[:, 0] + x_pos, aspect_ratio*T[:, 1] + y_pos, c=labels, cmap='tab10', marker='.', edgecolor='none', alpha=0.08, s=5)
 
             # draw box
             plt.gca().add_patch(

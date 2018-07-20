@@ -1,90 +1,46 @@
 from __future__ import print_function
-#import matplotlib; matplotlib.use('Agg')  # Allows us to run on a headless machine
 import plot
 import model as m
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import os
+
+BetaValues = np.array([0.0, 0.05, 0.11, 0.13, 0.15, 0.2, 0.3, 0.4, 0.5, 0.8, 1.0, 2.0]) # sparse sweep
+BetaValues = np.array([0.25, 0.35, 0.45, 0.55, 0.6, 0.65, 0.7])
+
 
 FIGS_DIR = 'figures/'
 LOGS_DIR = 'logs/'
 report_loss_every_epoch = 20
 beta_start_epoch   = 0
 beta_rampup_epochs = 0      # Slowly phase in beta over this many epochs . 0 for no rampup
-n_data = 2000               # consider a small subset of data (for code testing only)
-n_models = 3                # simultaneously train n_models at once and save results for the best model only
+n_data = None               # consider a small subset of data (for code testing only)
+n_models = 10               # simultaneously train n_models at once and save results for the best model only
+
 
 def main():
 
     # build and train models for different values of beta
-
-    #Beta = np.append(0, np.append(10**np.linspace(start=-1.1, stop=0.2, num=20), 3))
-    Beta = np.array([0.0, 0.05, 0.11, 0.13, 0.15, 0.2, 0.3, 0.4, 0.5, 0.8, 1.0, 2.0]) # sparse sweep
-    if True:
-        # load training data
-        data = load_mnist()
-
-        #build_and_train_model(data, beta=0.8, save_logs=True, squared_IB_functional=False)
-
-        # train model
-        for beta in Beta:
-            build_and_train_model(data, beta=beta, save_logs=True, squared_IB_functional=True)
-        for beta in Beta:
-            build_and_train_model(data, beta=beta, save_logs=True, squared_IB_functional=False)
+    if not os.path.exists(FIGS_DIR):
+       print("Making figures directory", FIGS_DIR)
+       os.mkdir(FIGS_DIR)
+    if not os.path.exists(LOGS_DIR):
+       print("Making logs directory", LOGS_DIR)
+       os.mkdir(LOGS_DIR)
 
 
-    # load data from text files and plot figures
-    if True:
-        # load data for IB curves
-        I_xt_squared_IB, I_yt_squared_IB, I_xt, I_yt = [], [], [], []
-        for beta in Beta:
-            beta_string = '%.3f' % beta
-            file_name = 'IB2_beta_' + beta_string.replace('.', '-')
-            learning_curves = np.loadtxt(LOGS_DIR+'learning_curves_' + file_name + '.txt')
-            I_xt_squared_IB.append(learning_curves[-1, 1])
-            I_yt_squared_IB.append(learning_curves[-1, 2])
+    # load training data
+    data = load_mnist()
 
-            file_name = 'IB_beta_' + beta_string.replace('.', '-')
-            learning_curves = np.loadtxt(LOGS_DIR+'learning_curves_' + file_name + '.txt')
-            I_xt.append(learning_curves[-1, 1])
-            I_yt.append(learning_curves[-1, 2])
-        I_xt_squared_IB = np.array(I_xt_squared_IB)
-        I_yt_squared_IB = np.array(I_yt_squared_IB)
-        I_xt = np.array(I_xt)
-        I_yt = np.array(I_yt)
-        I_xt_test_squared_IB = np.loadtxt(LOGS_DIR+'test_set_results_IB2.txt', usecols=1)[-len(Beta):]
-        I_yt_test_squared_IB = np.loadtxt(LOGS_DIR+'test_set_results_IB2.txt', usecols=2)[-len(Beta):]
-        I_xt_test = np.loadtxt(LOGS_DIR+'test_set_results_IB_.txt', usecols=1)[-len(Beta):]
-        I_yt_test = np.loadtxt(LOGS_DIR+'test_set_results_IB_.txt', usecols=2)[-len(Beta):]
+    #build_and_train_model(data, beta=0.8, save_logs=True, squared_IB_functional=False)
 
-        #with open(LOGS_DIR+'train_set_results_IB2' + '.txt', 'w') as file:
-        #    np.savetxt(fname=file, fmt='%.5f', X=np.array([Beta, I_xt_squared_IB, I_yt_squared_IB]).T)
-        #with open(LOGS_DIR+'train_set_results_IB' + '.txt', 'w') as file:
-        #    np.savetxt(fname=file, fmt='%.5f', X=np.array([Beta, I_xt, I_yt]).T)
-
-        # plot IB curves
-        plt.figure(100, figsize=(8, 3))
-        plot.plot_IB_curves(I_xt, I_yt, I_xt_test, I_yt_test, Beta)
-        plt.savefig(FIGS_DIR+'IB_curves')
-
-        plt.figure(101, figsize=(8, 3))
-        plot.plot_IB_curves(I_xt_squared_IB, I_yt_squared_IB, I_xt_test_squared_IB, I_yt_test_squared_IB, Beta)
-        plt.savefig(FIGS_DIR+'IB2_curves')
-
-        # plot scatter plots
-        plt.figure(102, figsize=(5, 5))
-        plot.plot_scatter_plots(Beta, 'IB_beta_')
-        plt.savefig(FIGS_DIR+'IB_scatter')
-
-        plt.figure(103, figsize=(5, 5))
-        plot.plot_scatter_plots(Beta, 'IB2_beta_')
-        plt.savefig(FIGS_DIR+'IB2_scatter')
-
-        # plot inline
-        plt.figure(104, figsize=[4, 6])
-        plot.plot_inline(I_xt, I_yt, I_xt_squared_IB, I_yt_squared_IB, Beta)
-        plt.savefig(FIGS_DIR+'IB_inline.pdf', bbox_inches='tight')
+    # train model
+    for beta in BetaValues:
+        build_and_train_model(data, beta=beta, save_logs=True, squared_IB_functional=False)
+    for beta in BetaValues:
+        build_and_train_model(data, beta=beta, save_logs=True, squared_IB_functional=True)
 
     plt.show()
 
@@ -222,7 +178,14 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
                     best_model = model
             model = best_model
 
-            #plt.savefig(FIGS_DIR+'training_' + file_name)
+            T, T_no_noise = sess.run(model.encoder(), feed_dict={x: train_data[:]})
+            plt.figure(i, figsize=(12, 2))
+            plt.clf()
+            plot.plot_training_figures(model.learning_curve_epochs, model.learning_curve, model.Ixt_curve, model.Iyt_curve, T, T_no_noise, train_labels[:], beta_string, model.name)
+            figurefilename = FIGS_DIR+'best_training_' + file_name + '_' + model.name
+            print("* Updated ", figurefilename)
+            plt.savefig(figurefilename)
+
 
             # learning curves for training data set
             with open(LOGS_DIR+'learning_curves_' + file_name + '.txt', 'w') as file:
@@ -265,7 +228,10 @@ def load_mnist():
     train_labels = one_hot(train_labels)
     test_labels = one_hot(test_labels)
 
-    data = {'train_data': train_data[:n_data], 'train_labels': train_labels[:n_data], 'test_data': test_data[:n_data], 'test_labels': test_labels[:n_data]}
+    if n_data is not None:
+        data = {'train_data': train_data[:n_data], 'train_labels': train_labels[:n_data], 'test_data': test_data[:n_data], 'test_labels': test_labels[:n_data]}
+    else:
+        data = {'train_data': train_data, 'train_labels': train_labels, 'test_data': test_data, 'test_labels': test_labels}
 
     return data
 
