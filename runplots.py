@@ -40,17 +40,17 @@ if True:
 if True:
     # plot scatter plots
     plt.figure(102, figsize=(5, 5))
-    plot.plot_scatter_plots(BetaValues, 'IB_beta_')
+    plot.plot_scatter_plots(LOGS_DIR,BetaValues, 'IB_beta_')
     plt.savefig(FIGS_DIR+'IB_scatter.png', dpi=300)
 
     plt.figure(103, figsize=(5, 5))
-    plot.plot_scatter_plots(BetaValues, 'IB2_beta_')
+    plot.plot_scatter_plots(LOGS_DIR,BetaValues, 'IB2_beta_')
     plt.savefig(FIGS_DIR+'IB2_scatter.png', dpi=300)
 
 if True:
     # plot inline
     plt.figure(104, figsize=[4, 6])
-    plot.plot_inline(I_xt, I_yt, I_xt_squared_IB, I_yt_squared_IB, BetaValues)
+    plot.plot_inline(LOGS_DIR, I_xt, I_yt, I_xt_squared_IB, I_yt_squared_IB, BetaValues)
     plt.savefig(FIGS_DIR+'IB_inline.pdf', bbox_inches='tight')
 
 plt.show()

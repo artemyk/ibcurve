@@ -70,10 +70,12 @@ def plot_training_figures(epochs, loss, Ixt, Iyt, T, T_no_noise, labels, beta_st
 
 
 def plot_IB_curves(I_xt, I_yt, I_xt_test, I_yt_test, Beta):
+    markersize = 6
+    
     plt.subplot(1, 3, 1)
     plt.plot([0, 4], [0, -4], '--k')
-    plt.plot(I_xt, -I_yt, 'v-', markersize=3)
-    plt.plot(I_xt_test, -I_yt_test, 'g^:', markersize=3)
+    plt.plot(I_xt, -I_yt, 'v-', markersize=markersize)
+    plt.plot(I_xt_test, -I_yt_test, 'g^:', markersize=markersize)
     plt.xlabel('I(X;T)')
     plt.ylabel('-I(Y;T)')
     #plt.ylim(ymax=0)
@@ -81,8 +83,8 @@ def plot_IB_curves(I_xt, I_yt, I_xt_test, I_yt_test, Beta):
 
     plt.subplot(1, 3, 2)
     plt.plot(Beta[[0, -1]], [np.log(10), np.log(10)], '--k')
-    plt.plot(Beta, I_yt, 'v-', markersize=3)
-    plt.plot(Beta, I_yt_test, 'g^:', markersize=3)
+    plt.plot(Beta, I_yt, 'v-', markersize=markersize)
+    plt.plot(Beta, I_yt_test, 'g^:', markersize=markersize)
     plt.xlabel(r'$\beta$')
     plt.ylabel('I(Y;T)')
     #plt.ylim(ymin=0)
@@ -90,8 +92,8 @@ def plot_IB_curves(I_xt, I_yt, I_xt_test, I_yt_test, Beta):
 
     plt.subplot(1, 3, 3)
     plt.plot(Beta[[0, -1]], [np.log(10), np.log(10)], '--k')
-    plt.plot(Beta, I_xt, 'v-', markersize=3)
-    plt.plot(Beta, I_xt_test, 'g^:', markersize=3)
+    plt.plot(Beta, I_xt, 'v-', markersize=markersize)
+    plt.plot(Beta, I_xt_test, 'g^:', markersize=markersize)
     plt.xlabel(r'$\beta$')
     plt.ylabel('I(X;T)')
     #plt.ylim(ymin=0)
@@ -99,15 +101,16 @@ def plot_IB_curves(I_xt, I_yt, I_xt_test, I_yt_test, Beta):
     plt.tight_layout()
 
 
-def plot_scatter_plots(Beta, file_name):
-    for i, beta in enumerate(Beta):
+def plot_scatter_plots(LOGS_DIR, BetaValues, file_name):
+    n_beta_vals = len(BetaValues)
+    for i, beta in enumerate(BetaValues):
         beta_string = '%.3f' % beta
-        hidden_units = np.loadtxt('logs/hidden_units_' + file_name + beta_string.replace('.', '-') + '.txt')
+        hidden_units = np.loadtxt(LOGS_DIR+'hidden_units_' + file_name + beta_string.replace('.', '-') + '.txt')
 
         labels = hidden_units[:5000, 0]
         T = hidden_units[:5000, 1:3]
 
-        plt.subplot(np.ceil(np.sqrt(len(Beta))), np.ceil(np.sqrt(len(Beta))), i + 1)
+        plt.subplot(np.ceil(np.sqrt(n_beta_vals)), np.ceil(np.sqrt(n_beta_vals)), i + 1)
         plt.cla()
         plt.scatter(T[:, 0], T[:, 1], c=labels, cmap='tab10', marker='.', edgecolor='none', alpha=0.1, s=2)
         max_xy = np.max(np.abs(T), axis=0)
@@ -124,7 +127,7 @@ def plot_scatter_plots(Beta, file_name):
     plt.tight_layout()
 
 
-def plot_inline(I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_yt_squared_IB, Beta):
+def plot_inline(LOGS_DIR, I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_yt_squared_IB, Beta):
     sns.set_style('ticks')
     sns.set_context('talk')
 
@@ -183,7 +186,7 @@ def plot_inline(I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_yt_squared_
 
             # load data
             beta_string = '%.3f' % beta
-            data = np.loadtxt('logs/hidden_units_' + file_name + beta_string.replace('.', '-') + '.txt')
+            data = np.loadtxt(LOGS_DIR+'hidden_units_' + file_name + beta_string.replace('.', '-') + '.txt')
             labels = data[:2000, 0]
             T = data[:2000, 1:3]
 
