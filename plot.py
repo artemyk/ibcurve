@@ -130,30 +130,28 @@ def plot_scatter_plots(LOGS_DIR, BetaValues, file_name):
 def plot_inline(LOGS_DIR, I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_yt_squared_IB, Beta):
     sns.set_style('ticks')
     sns.set_context('talk')
-
     sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=Beta[0], vmax=Beta[-1] + 0.1))
-    # sm._A = []
 
-    for p in range(2):
-        if p is 0:
+    for p in range(2): # top plot: lagrangian, bottom plot: squared IB
+        if p is 0: # lagrangian subfigure
             plt.subplot(2, 1, 1)
             I_xt = I_xt_lagrangian
             I_yt = I_yt_lagrangian
             file_name = 'IB_beta_'
 
-            above_curve = [0, 4, 10]
-            below_curve = [7, 8]
+            above_curve = [0, np.where(Beta == 0.4)[0], len(Beta)-1] # scatter plots above the ib curve (indices)
+            below_curve = [1, np.where(Beta == 0.5)[0]]     # scatter plots below the ib curve (indices)
 
             plt.text(-4.5, 0.95 * 4, 'A', fontsize=20, fontweight=400)
 
-        else:
+        else: # squared IB subfigure
             plt.subplot(2, 1, 2)
             I_xt = I_xt_squared_IB
             I_yt = I_yt_squared_IB
             file_name = 'IB2_beta_'
 
-            above_curve = [0, 4, 11]
-            below_curve = [1, 6]
+            above_curve = [0, 5, len(Beta)-1]
+            below_curve = [1, np.where(Beta == 0.5)[0]]
 
             plt.text(-4.5, 0.95 * 4, 'B', fontsize=20, fontweight=400)
 
@@ -163,6 +161,7 @@ def plot_inline(LOGS_DIR, I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_y
         plt.ylim([-1, 4.0])
         plt.xlim([-2, 8.1])
         plt.yticks([-1, 0, 1, 2, 3, 4])
+        plt.xticks([-2, 0, 2, 4, 6, 8])
         plt.gca().tick_params(axis='both', which='major', pad=1)
 
         # theoretical IB curve
@@ -179,7 +178,7 @@ def plot_inline(LOGS_DIR, I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_y
         # scatter plots
         for i, beta in enumerate(Beta):
             scale = 0.027
-            aspect_ratio = (plt.xlim()[1]-plt.xlim()[0]) / (plt.xlim()[1]-plt.xlim()[0] + plt.ylim()[1]-plt.ylim()[0])
+            aspect_ratio = 0.57  # to make scatter plots square
 
             if beta == 0:
                 scale /= 9
@@ -208,19 +207,16 @@ def plot_inline(LOGS_DIR, I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_y
                 x_pos = I_xt[i] + width / 2 + 0.5
                 y_pos = I_yt[i] - height / 2 - 0.25
 
-                if Beta[i] == 0.5:
-                    y_pos += 0.25 + 0.15
+                if Beta[i] == 0.5 and p == 0:
+                    y_pos += 0.25
                     x_pos += 0.15
-
-                if Beta[i] == 0.4:
-                    y_pos -= 0.25
 
                 plt.plot([x_pos - width / 2, I_xt[i]], [y_pos + height / 2, I_yt[i]], 'k', lw=1)
             else:
                 continue
 
             # plot
-            plt.text(x_pos - width/2 - 0, y_pos + height/2 + 0.1, r'$\beta$ = %.2f' % beta, fontsize=7)
+            plt.text(x_pos - width/2 - 0.07, y_pos + height/2 + 0.1, r'$\beta$ = %.2f' % beta, fontsize=7)
             plt.scatter(T[:, 0] + x_pos, aspect_ratio*T[:, 1] + y_pos, c=labels, cmap='tab10', marker='.', edgecolor='none', alpha=0.08, s=5)
 
             # draw box
