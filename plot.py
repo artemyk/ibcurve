@@ -18,14 +18,14 @@ def plot_training_figures(epochs, loss, Ixt, Iyt, T, T_no_noise, labels, beta_st
     plt.cla()
     plt.plot(epochs, Ixt)
     plt.xlabel('epoch')
-    plt.ylabel('I(X;T)')
+    plt.ylabel('$I(X;T)$')
     plt.ylim(ymin=0)
 
     plt.subplot(1, 6, 3)
     plt.cla()
     plt.plot(epochs, Iyt)
     plt.xlabel('epoch')
-    plt.ylabel('I(Y;T)')
+    plt.ylabel('$I(Y;T)$')
     plt.ylim(ymin=0, ymax=2.5)
 
     # plot learning trajectory
@@ -35,8 +35,8 @@ def plot_training_figures(epochs, loss, Ixt, Iyt, T, T_no_noise, labels, beta_st
     plt.plot(Ixt, Iyt, '.')
     plt.plot(Ixt[-1], Iyt[-1], 'y*')
     plt.plot(Ixt[0], Iyt[0], 'r.')
-    plt.xlabel('I(X;T)')
-    plt.ylabel('I(Y;T)')
+    plt.xlabel('$I(X;T)$')
+    plt.ylabel('$I(Y;T)$')
 
 
     # plot bottleneck variables
@@ -76,27 +76,24 @@ def plot_IB_curves(I_xt, I_yt, I_xt_test, I_yt_test, Beta):
     plt.plot([0, 4], [0, 4], '--k')
     plt.plot(I_xt, I_yt, 'v-', markersize=markersize)
     plt.plot(I_xt_test, I_yt_test, 'g^:', markersize=markersize)
-    plt.xlabel('I(X;T)')
-    plt.ylabel('I(Y;T)')
-    #plt.ylim(ymax=0)
-    #plt.xlim(xmin=0)
+    plt.plot(plt.xlim(), [np.log(10), np.log(10)], ':k', zorder=-1)
+    plt.xlabel('$I(X;T)$')
+    plt.ylabel('$I(Y;T)$')
 
     plt.subplot(1, 3, 2)
-    plt.plot(Beta[[0, -1]], [np.log(10), np.log(10)], '--k')
-    plt.plot(Beta, I_yt, 'v-', markersize=markersize)
-    plt.plot(Beta, I_yt_test, 'g^:', markersize=markersize)
+    plt.plot(Beta, I_yt, 'v-', markersize=markersize, label='train')
+    plt.plot(Beta, I_yt_test, 'g^:', markersize=markersize, label='test')
+    plt.plot(plt.xlim(), [np.log(10), np.log(10)], ':k', zorder=-1, label='$H(Y)$')
     plt.xlabel(r'$\beta$')
-    plt.ylabel('I(Y;T)')
-    #plt.ylim(ymin=0)
-    plt.legend(['H(Y)', 'train', 'test'])
+    plt.ylabel('$I(Y;T)$')
+    plt.legend()
 
     plt.subplot(1, 3, 3)
-    plt.plot(Beta[[0, -1]], [np.log(10), np.log(10)], '--k')
     plt.plot(Beta, I_xt, 'v-', markersize=markersize)
     plt.plot(Beta, I_xt_test, 'g^:', markersize=markersize)
+    plt.plot(plt.xlim(), [np.log(10), np.log(10)], ':k', zorder=-1)
     plt.xlabel(r'$\beta$')
-    plt.ylabel('I(X;T)')
-    #plt.ylim(ymin=0)
+    plt.ylabel('$I(X;T)$')
 
     plt.tight_layout()
 
