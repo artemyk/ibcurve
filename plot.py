@@ -69,7 +69,7 @@ def plot_training_figures(epochs, loss, Ixt, Iyt, T, T_no_noise, labels, beta_st
     plt.pause(0.01)
 
 
-def plot_IB_curves(I_xt, I_yt, I_xt_test, I_yt_test, Beta):
+def plot_IB_curves(I_xt, I_yt, I_xt_test, I_yt_test, BetaValues):
     markersize = 6
 
     plt.subplot(1, 3, 1)
@@ -81,16 +81,16 @@ def plot_IB_curves(I_xt, I_yt, I_xt_test, I_yt_test, Beta):
     plt.ylabel('$I(Y;T)$')
 
     plt.subplot(1, 3, 2)
-    plt.plot(Beta, I_yt, 'v-', markersize=markersize, label='train')
-    plt.plot(Beta, I_yt_test, 'g^:', markersize=markersize, label='test')
+    plt.plot(BetaValues, I_yt, 'v-', markersize=markersize, label='train')
+    plt.plot(BetaValues, I_yt_test, 'g^:', markersize=markersize, label='test')
     plt.plot(plt.xlim(), [np.log(10), np.log(10)], ':k', zorder=-1, label='$H(Y)$')
     plt.xlabel(r'$\beta$')
     plt.ylabel('$I(Y;T)$')
     plt.legend()
 
     plt.subplot(1, 3, 3)
-    plt.plot(Beta, I_xt, 'v-', markersize=markersize)
-    plt.plot(Beta, I_xt_test, 'g^:', markersize=markersize)
+    plt.plot(BetaValues, I_xt, 'v-', markersize=markersize)
+    plt.plot(BetaValues, I_xt_test, 'g^:', markersize=markersize)
     plt.plot(plt.xlim(), [np.log(10), np.log(10)], ':k', zorder=-1)
     plt.xlabel(r'$\beta$')
     plt.ylabel('$I(X;T)$')
@@ -124,10 +124,10 @@ def plot_scatter_plots(LOGS_DIR, BetaValues, file_name):
     plt.tight_layout()
 
 
-def plot_inline(LOGS_DIR, I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_yt_squared_IB, Beta):
+def plot_inline(LOGS_DIR, I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_yt_squared_IB, BetaValues):
     sns.set_style('ticks')
     sns.set_context('talk')
-    sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=Beta[0], vmax=Beta[-1] + 0.1))
+    sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=BetaValues[0], vmax=BetaValues[-1] + 0.1))
 
     for p in range(2): # top plot: lagrangian, bottom plot: squared IB
         if p is 0: # lagrangian subfigure
@@ -136,8 +136,8 @@ def plot_inline(LOGS_DIR, I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_y
             I_yt = I_yt_lagrangian
             file_name = 'IB_beta_'
 
-            above_curve = [0, np.where(Beta == 0.4)[0], len(Beta)-1] # scatter plots above the ib curve (indices)
-            below_curve = [1, np.where(Beta == 0.5)[0]]     # scatter plots below the ib curve (indices)
+            above_curve = [0, np.where(BetaValues == 0.4)[0], np.where(BetaValues == 1.0)[0]] # scatter plots above the ib curve (indices)
+            below_curve = [1, np.where(BetaValues == 0.5)[0]]     # scatter plots below the ib curve (indices)
 
             plt.text(-4.5, 0.95 * 4, 'A', fontsize=20, fontweight=400)
 
@@ -147,8 +147,8 @@ def plot_inline(LOGS_DIR, I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_y
             I_yt = I_yt_squared_IB
             file_name = 'IB2_beta_'
 
-            above_curve = [0, 5, len(Beta)-1]
-            below_curve = [1, np.where(Beta == 0.5)[0]]
+            above_curve = [0, 5, len(BetaValues)-1]
+            below_curve = [1, np.where(BetaValues == 0.5)[0]]
 
             plt.text(-4.5, 0.95 * 4, 'B', fontsize=20, fontweight=400)
 
@@ -168,12 +168,12 @@ def plot_inline(LOGS_DIR, I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_y
         plt.plot(xs, np.minimum(xs, max_mi_YT), color=np.array([1, 1, 1]) * 0.7, lw=6)
 
         # empirical results
-        for i in range(len(Beta)):
-            c = sm.to_rgba(Beta[i])
+        for i in range(len(BetaValues)):
+            c = sm.to_rgba(BetaValues[i])
             plt.plot(I_xt[i], I_yt[i], '*', markersize=15, color=c)
 
         # scatter plots
-        for i, beta in enumerate(Beta):
+        for i, beta in enumerate(BetaValues):
             scale = 0.027
             aspect_ratio = 0.57  # to make scatter plots square
 
@@ -204,7 +204,7 @@ def plot_inline(LOGS_DIR, I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_y
                 x_pos = I_xt[i] + width / 2 + 0.5
                 y_pos = I_yt[i] - height / 2 - 0.25
 
-                if Beta[i] == 0.5 and p == 0:
+                if BetaValues[i] == 0.5 and p == 0:
                     y_pos += 0.25
                     x_pos += 0.15
 
