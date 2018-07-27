@@ -74,23 +74,23 @@ def plot_IB_curves(I_xt, I_yt, I_xt_test, I_yt_test, BetaValues):
 
     plt.subplot(1, 3, 1)
     plt.plot([0, 4], [0, 4], '--k')
-    plt.plot(I_xt, I_yt, 'v-', markersize=markersize)
-    plt.plot(I_xt_test, I_yt_test, 'g^:', markersize=markersize)
+    plt.plot(I_xt, I_yt, 'o-', markerfacecolor="None", markersize=markersize)
+    plt.plot(I_xt_test, I_yt_test, 'gx:', markerfacecolor="None", markersize=markersize)
     plt.plot(plt.xlim(), [np.log(10), np.log(10)], ':k', zorder=-1)
     plt.xlabel('$I(X;T)$')
     plt.ylabel('$I(Y;T)$')
 
     plt.subplot(1, 3, 2)
-    plt.plot(BetaValues, I_yt, 'v-', markersize=markersize, label='train')
-    plt.plot(BetaValues, I_yt_test, 'g^:', markersize=markersize, label='test')
+    plt.plot(BetaValues, I_yt, 'o-', markerfacecolor="None", markersize=markersize, label='train')
+    plt.plot(BetaValues, I_yt_test, 'gx:', markerfacecolor="None", markersize=markersize, label='test')
     plt.plot(plt.xlim(), [np.log(10), np.log(10)], ':k', zorder=-1, label='$H(Y)$')
     plt.xlabel(r'$\beta$')
     plt.ylabel('$I(Y;T)$')
     plt.legend()
 
     plt.subplot(1, 3, 3)
-    plt.plot(BetaValues, I_xt, 'v-', markersize=markersize)
-    plt.plot(BetaValues, I_xt_test, 'g^:', markersize=markersize)
+    plt.plot(BetaValues, I_xt, 'o-', markerfacecolor="None", markersize=markersize)
+    plt.plot(BetaValues, I_xt_test, 'gx:', markerfacecolor="None", markersize=markersize)
     plt.plot(plt.xlim(), [np.log(10), np.log(10)], ':k', zorder=-1)
     plt.xlabel(r'$\beta$')
     plt.ylabel('$I(X;T)$')
@@ -229,7 +229,7 @@ def plot_inline(LOGS_DIR, I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_y
 
     plt.plot([], label='Theoretical IB curve', color=np.array([1, 1, 1]) * 0.7, lw=6)  # proxy plots for legend
     plt.plot([], '*k', label='Empirical results', markersize=15)
-    legend = plt.legend(fancybox=True, fontsize=11, frameon=True, bbox_to_anchor=(0.50, 0.35))
+    legend = plt.legend(fancybox=True, fontsize=8, frameon=True, bbox_to_anchor=(0.50, 0.35))
     legend.get_frame().set_facecolor('#EEEEFF')
     legend.get_frame().set_alpha(1.0)
 

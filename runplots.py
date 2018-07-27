@@ -27,7 +27,7 @@ I_yt_test_squared_IB = np.loadtxt(LOGS_DIR+'test_set_results_IB2.txt', usecols=2
 I_xt_test = np.loadtxt(LOGS_DIR+'test_set_results_IB_.txt', usecols=1)[-len(BetaValues):]
 I_yt_test = np.loadtxt(LOGS_DIR+'test_set_results_IB_.txt', usecols=2)[-len(BetaValues):]
 
-if False:
+if True:
     # plot IB curves
     plt.figure(100, figsize=(8, 2.5))
     ixs = np.logical_and(BetaValues >= 0.0, BetaValues <= 1.0)
@@ -40,7 +40,7 @@ if False:
     plot.plot_IB_curves(I_xt_squared_IB, I_yt_squared_IB, I_xt_test_squared_IB, I_yt_test_squared_IB, BetaValues)
     plt.savefig(FIGS_DIR+'IB2_curves.pdf', bbox_inches='tight')
 
-if False:
+if True:
     # plot scatter plots
     plt.figure(102, figsize=(5, 5))
     plot.plot_scatter_plots(LOGS_DIR,BetaValues, 'IB_beta_')
