@@ -71,13 +71,13 @@ def plot_training_figures(epochs, loss, Ixt, Iyt, T, T_no_noise, labels, beta_st
 
 def plot_IB_curves(I_xt, I_yt, I_xt_test, I_yt_test, Beta):
     markersize = 6
-    
+
     plt.subplot(1, 3, 1)
-    plt.plot([0, 4], [0, -4], '--k')
-    plt.plot(I_xt, -I_yt, 'v-', markersize=markersize)
-    plt.plot(I_xt_test, -I_yt_test, 'g^:', markersize=markersize)
+    plt.plot([0, 4], [0, 4], '--k')
+    plt.plot(I_xt, I_yt, 'v-', markersize=markersize)
+    plt.plot(I_xt_test, I_yt_test, 'g^:', markersize=markersize)
     plt.xlabel('I(X;T)')
-    plt.ylabel('-I(Y;T)')
+    plt.ylabel('I(Y;T)')
     #plt.ylim(ymax=0)
     #plt.xlim(xmin=0)
 

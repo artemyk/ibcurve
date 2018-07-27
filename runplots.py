@@ -29,11 +29,14 @@ I_yt_test = np.loadtxt(LOGS_DIR+'test_set_results_IB_.txt', usecols=2)[-len(Beta
 
 if True:
     # plot IB curves
-    plt.figure(100, figsize=(8, 3))
-    plot.plot_IB_curves(I_xt, I_yt, I_xt_test, I_yt_test, BetaValues)
+    plt.figure(100, figsize=(8, 2))
+    ixs = np.logical_and(BetaValues >= 0.0, BetaValues <= 1.0)
+    plot.plot_IB_curves(I_xt[ixs], I_yt[ixs], 
+                        I_xt_test[ixs], I_yt_test[ixs],
+                        BetaValues[ixs])
     plt.savefig(FIGS_DIR+'IB_curves.pdf', bbox_inches='tight')
 
-    plt.figure(101, figsize=(8, 3))
+    plt.figure(101, figsize=(8, 2))
     plot.plot_IB_curves(I_xt_squared_IB, I_yt_squared_IB, I_xt_test_squared_IB, I_yt_test_squared_IB, BetaValues)
     plt.savefig(FIGS_DIR+'IB2_curves.pdf', bbox_inches='tight')
 
