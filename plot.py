@@ -126,7 +126,8 @@ def plot_scatter_plots(LOGS_DIR, BetaValues, file_name):
 
 def plot_inline(LOGS_DIR, I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_yt_squared_IB, BetaValues):
     sns.set_style('ticks')
-    sns.set_context('talk')
+    # sns.set_context('talk')
+    sns.set_context('paper', font_scale=1.5)
     sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=BetaValues[0], vmax=BetaValues[-1] + 0.1))
 
     for p in range(2): # top plot: lagrangian, bottom plot: squared IB
@@ -196,24 +197,30 @@ def plot_inline(LOGS_DIR, I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_y
             width = 1.35
             height = width * aspect_ratio
 
+            betastring_xoffset = 0.0
             if i in above_curve:
                 x_pos = I_xt[i] - width / 2 - 0.5
                 y_pos = I_yt[i] + height / 2 + 0.25
                 plt.plot([x_pos+width/2, I_xt[i]], [y_pos - height/2, I_yt[i]], 'k', lw=1)
             elif i in below_curve:
-                x_pos = I_xt[i] + width / 2 + 0.5
-                y_pos = I_yt[i] - height / 2 - 0.25
+                x_pos = I_xt[i] + width / 2 + 0.5*1.5
+                y_pos = I_yt[i] - height / 2 - 0.25*1.5
 
-                if BetaValues[i] == 0.5 and p == 0:
+                if beta == 0.5 and p == 0:
                     y_pos += 0.25
-                    x_pos += 0.15
+                    x_pos += 0.25
+
+                if np.isclose(beta, 0.05):
+                    y_pos -= 0.25/1.5
+                    x_pos += 0.5/1.5
+                    betastring_xoffset += 0.2
 
                 plt.plot([x_pos - width / 2, I_xt[i]], [y_pos + height / 2, I_yt[i]], 'k', lw=1)
             else:
                 continue
 
             # plot
-            plt.text(x_pos - width/2 - 0.07, y_pos + height/2 + 0.1, r'$\beta$ = %.2f' % beta, fontsize=7)
+            plt.text(x_pos + betastring_xoffset, y_pos + height/2 + 0.1, r'$\beta=%g$' % beta, ha='center', fontsize=10)
             plt.scatter(T[:, 0] + x_pos, aspect_ratio*T[:, 1] + y_pos, c=labels, cmap='tab10', marker='.', edgecolor='none', alpha=0.08, s=5)
 
             # draw box
@@ -222,14 +229,15 @@ def plot_inline(LOGS_DIR, I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_y
                     (-width/2 + x_pos, -height/2 + y_pos),
                     width,
                     height,
-                    fill=False,  # remove background
+                    edgecolor='k',
+                    facecolor='none', # remove background
                     linewidth=1
                 )
             )
 
     plt.plot([], label='Theoretical IB curve', color=np.array([1, 1, 1]) * 0.7, lw=6)  # proxy plots for legend
     plt.plot([], '*k', label='Empirical results', markersize=15)
-    legend = plt.legend(fancybox=True, fontsize=8, frameon=True, bbox_to_anchor=(0.50, 0.35))
+    legend = plt.legend(fancybox=True, fontsize=10, frameon=True, bbox_to_anchor=(0.50, 0.35))
     legend.get_frame().set_facecolor('#EEEEFF')
     legend.get_frame().set_alpha(1.0)
 

@@ -12,6 +12,7 @@ BetaValues = np.sort(np.concatenate([BetaValues, np.array([0.25, 0.35, 0.45, 0.5
 
 FIGS_DIR = 'figures2/'
 LOGS_DIR = 'logs2/'
+
 report_loss_every_epoch = 20
 beta_start_epoch   = 0
 beta_rampup_epochs = 0      # Slowly phase in beta over this many epochs . 0 for no rampup
@@ -25,15 +26,19 @@ def main():
     if not os.path.exists(FIGS_DIR):
        print("Making figures directory", FIGS_DIR)
        os.mkdir(FIGS_DIR)
+    if not os.path.exists(FIGS_DIR + 'allmodels/'):
+       print("Making figures for all models directory", FIGS_DIR + 'allmodels/')
+       os.mkdir(FIGS_DIR + 'allmodels/')
     if not os.path.exists(LOGS_DIR):
        print("Making logs directory", LOGS_DIR)
        os.mkdir(LOGS_DIR)
+    if not os.path.exists(LOGS_DIR + 'allmodels/'):
+       print("Making logs for all models directory", LOGS_DIR + 'allmodels/')
+       os.mkdir(LOGS_DIR + 'allmodels/')
 
 
     # load training data
     data = load_mnist()
-
-    #build_and_train_model(data, beta=0.8, save_logs=True, squared_IB_functional=False)
 
     # train model
     for beta in BetaValues:
@@ -148,9 +153,14 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
                     plt.clf()
                     plot.plot_training_figures(model.learning_curve_epochs, model.learning_curve, model.Ixt_curve, model.Iyt_curve, T, T_no_noise, train_labels[:], beta_string, model.name)
                     if save_logs:
-                        figurefilename = FIGS_DIR+'training_' + file_name + '_' + model.name
+                        # scatter plots
+                        figurefilename = FIGS_DIR+'allmodels/training_' + file_name + '_' + model.name
                         print("* Updated ", figurefilename)
                         plt.savefig(figurefilename)
+                          
+                        # hidden unit activity on training data
+                        with open(LOGS_DIR+'allmodels/hidden_units_' + file_name + '_' + model.name + '.txt', 'w') as file:
+                           np.savetxt(fname=file, fmt='%.5f', X=np.array([np.argmax(train_labels, axis=1), T[:, 0], T[:, 1], T_no_noise[:, 0], T_no_noise[:, 1]]).T) 
 
             # print output
             log_sigma2 = sess.run(models[0].log_sigma2)
@@ -172,35 +182,35 @@ def build_and_train_model(data, beta=0.0, save_logs=False, squared_IB_functional
 
             # only log data for the best model (i.e., the lowest loss)
             best_model = models[0]
-            for model in models:
+            for ndx, model in enumerate(models):
+
                 if model.learning_curve[-1] < best_model.learning_curve[-1]:
                     best_model = model
-            model = best_model
 
-            T, T_no_noise = sess.run(model.encoder(), feed_dict={x: train_data[:]})
+            T, T_no_noise = sess.run(best_model.encoder(), feed_dict={x: train_data[:]})
             plt.figure(i, figsize=(12, 2))
             plt.clf()
-            plot.plot_training_figures(model.learning_curve_epochs, model.learning_curve, model.Ixt_curve, model.Iyt_curve, T, T_no_noise, train_labels[:], beta_string, model.name)
-            figurefilename = FIGS_DIR+'best_training_' + file_name + '_' + model.name
+            plot.plot_training_figures(best_model.learning_curve_epochs, best_model.learning_curve, best_model.Ixt_curve, best_model.Iyt_curve, T, T_no_noise, train_labels[:], beta_string, best_model.name)
+            figurefilename = FIGS_DIR+'best_training_' + file_name + '_' + best_model.name
             print("* Updated ", figurefilename)
             plt.savefig(figurefilename)
 
 
             # learning curves for training data set
             with open(LOGS_DIR+'learning_curves_' + file_name + '.txt', 'w') as file:
-                np.savetxt(fname=file, fmt='%.5f', X=np.array([model.learning_curve, model.Ixt_curve, model.Iyt_curve]).T)
+                np.savetxt(fname=file, fmt='%.5f', X=np.array([best_model.learning_curve, best_model.Ixt_curve, best_model.Iyt_curve]).T)
 
-            # scatter plots for training data
-            T, T_no_noise = sess.run(model.encoder(), feed_dict={x: train_data})
+            # hidden unit activity on training data
+            T, T_no_noise = sess.run(best_model.encoder(), feed_dict={x: train_data})
             with open(LOGS_DIR+'hidden_units_' + file_name + '.txt', 'w') as file:
-                np.savetxt(fname=file, fmt='%.5f', X=np.array([np.argmax(train_labels, axis=1), T[:, 0], T[:, 1], T_no_noise[:, 0], T_no_noise[:, 1]]).T)
+                np.savetxt(fname=file, fmt='%.5f', X=np.array([np.argmax(train_labels, axis=1), T[:, 0], T[:, 1], T_no_noise[:, 0], T_no_noise[:, 1]]).T) 
 
             # final results for test data set
             Ixt_test, Iyt_test = 0, 0
             for reps in range(25):
                 i = np.random.randint(low=0, high=len(data['test_data']), size=n_sgd)
-                Ixt = sess.run(model.Ixt(), feed_dict={x: data['test_data'][i]})
-                Iyt = sess.run(model.Iyt(), feed_dict={x: data['test_data'][i], y: data['test_labels'][i]})
+                Ixt = sess.run(best_model.Ixt(), feed_dict={x: data['test_data'][i]})
+                Iyt = sess.run(best_model.Iyt(), feed_dict={x: data['test_data'][i], y: data['test_labels'][i]})
 
                 Ixt_test += Ixt/25
                 Iyt_test += Iyt/25
