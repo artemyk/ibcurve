@@ -242,6 +242,3 @@ def plot_inline(LOGS_DIR, I_xt_lagrangian, I_yt_lagrangian, I_xt_squared_IB, I_y
     legend.get_frame().set_alpha(1.0)
 
     plt.tight_layout()
-
-    #cbaxes = plt.gcf().add_axes([1.04, 0.22, 0.03, 0.7])
-    #plt.colorbar(sm, label=r'$\beta$', cax=cbaxes, format='%d', ticks=[0, 1, 2])

@@ -1,2 +1,5 @@
 # ibcurve
-# Experiments for 'On the information bottleneck curve for classification', 2018
+
+Experiments with MNIST, reporting in:
+
+A Kolchinsky, BD Tracey, S van Kuyk, ``Pathologies in information bottleneck for deterministic supervised learning''.
