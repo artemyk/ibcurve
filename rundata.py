@@ -10,8 +10,8 @@ import tensorflow as tf
 BetaValues = np.array([0.0, 0.05, 0.11, 0.13, 0.15, 0.2, 0.3, 0.4, 0.5, 0.8, 1.0, 2.0]) # sparse sweep
 BetaValues = np.sort(np.concatenate([BetaValues, np.array([0.25, 0.35, 0.45, 0.55, 0.6, 0.65, 0.7])]))
 
-FIGS_DIR = 'figures2/'
-LOGS_DIR = 'logs2/'
+FIGS_DIR = 'figures/'
+LOGS_DIR = 'logs/'
 
 report_loss_every_epoch = 20
 beta_start_epoch   = 0
