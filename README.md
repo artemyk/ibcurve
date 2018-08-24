@@ -1,4 +1,4 @@
-# ibcurve
+# Pathologies in information bottleneck for deterministic supervised learning
 
 Experiments with MNIST, as reported in:
 
